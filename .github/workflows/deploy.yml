@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@master
@@ -18,45 +18,128 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
+          envs: MYSQL_PASSWORD,JWT_SECRET,GEMINI_API_KEY,STRIPE_API_KEY
           script: |
-            # 1. Proje klasörüne git
+            set -e
+            
+            echo "🚀 Site Duyuru Backend Deployment Başlıyor..."
+            
+            # ========================================
+            # 1. MySQL Kurulumu ve Yapılandırması
+            # ========================================
+            if ! command -v mysql &> /dev/null; then
+              echo "📦 MySQL kuruluyor..."
+              sudo apt update
+              sudo apt install -y mysql-server
+              sudo systemctl start mysql
+              sudo systemctl enable mysql
+              
+              # MySQL veritabanı ve kullanıcı oluştur
+              sudo mysql -e "CREATE DATABASE IF NOT EXISTS siteduyuru_db;"
+              sudo mysql -e "CREATE USER IF NOT EXISTS 'siteduyuru'@'localhost' IDENTIFIED BY '${{ secrets.MYSQL_PASSWORD }}';"
+              sudo mysql -e "GRANT ALL PRIVILEGES ON siteduyuru_db.* TO 'siteduyuru'@'localhost';"
+              sudo mysql -e "FLUSH PRIVILEGES;"
+              echo "✅ MySQL kurulumu tamamlandı!"
+            else
+              echo "✅ MySQL zaten kurulu"
+            fi
+            
+            # ========================================
+            # 2. Java 17 Kurulumu
+            # ========================================
+            if ! command -v java &> /dev/null; then
+              echo "📦 Java 17 kuruluyor..."
+              sudo apt update
+              sudo apt install -y openjdk-17-jdk
+              echo "✅ Java kurulumu tamamlandı!"
+            else
+              echo "✅ Java zaten kurulu: $(java -version 2>&1 | head -n 1)"
+            fi
+            
+            # ========================================
+            # 3. Proje Klonlama / Güncelleme
+            # ========================================
             PROJECT_DIR="/home/ubuntu/siteprojesi"
             
             if [ ! -d "$PROJECT_DIR" ]; then
-              echo "❌ HATA: Proje klasörü ($PROJECT_DIR) bulunamadı!"
-              echo "🛠 ÇÖZÜM: Lütfen sunucuya bağlanıp: git clone https://github.com/omerdikmen13/siteprojesi.git siteprojesi"
-              exit 1
+              echo "📥 Proje klonlanıyor..."
+              cd /home/ubuntu
+              git clone https://github.com/omerdikmen13/siteprojesi.git
             fi
-
+            
             cd $PROJECT_DIR
             git reset --hard HEAD
             git pull origin main
             
-            # 2. Java Backend Derleme (Build)
+            # ========================================
+            # 4. Environment Dosyası Oluştur
+            # ========================================
             cd SiteDuyuruSistemi
-            chmod +x mvnw
-            ./mvnw clean package -DskipTests
+            cat > .env << 'ENVEOF'
+            MYSQL_USERNAME=siteduyuru
+            MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+            STRIPE_API_KEY=${{ secrets.STRIPE_API_KEY }}
+            SPRING_PROFILES_ACTIVE=prod
+            ENVEOF
             
-            # 3. Systemd Servisi Oluştur (Yoksa)
-            cat <<EOF | sudo tee /etc/systemd/system/site-duyuru.service
+            # ========================================
+            # 5. Maven Build
+            # ========================================
+            echo "🔨 Maven build başlıyor..."
+            chmod +x mvnw
+            ./mvnw clean package -DskipTests -Dspring.profiles.active=prod
+            
+            # ========================================
+            # 6. Systemd Servisi (7/24 Çalışma)
+            # ========================================
+            echo "⚙️ Systemd servisi yapılandırılıyor..."
+            sudo tee /etc/systemd/system/site-duyuru.service > /dev/null << 'EOF'
             [Unit]
             Description=Site Duyuru Java Backend
-            After=network.target
+            After=network.target mysql.service
+            Wants=mysql.service
 
             [Service]
             User=ubuntu
             WorkingDirectory=/home/ubuntu/siteprojesi/SiteDuyuruSistemi
-            ExecStart=/usr/bin/java -jar target/SiteDuyuruSistemi-0.0.1-SNAPSHOT.jar
+            Environment="JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64"
+            Environment="MYSQL_USERNAME=siteduyuru"
+            Environment="MYSQL_PASSWORD=${{ secrets.MYSQL_PASSWORD }}"
+            Environment="JWT_SECRET=${{ secrets.JWT_SECRET }}"
+            Environment="GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}"
+            Environment="STRIPE_API_KEY=${{ secrets.STRIPE_API_KEY }}"
+            Environment="SPRING_PROFILES_ACTIVE=prod"
+            ExecStart=/usr/bin/java -jar -Dspring.profiles.active=prod target/SiteDuyuruSistemi-0.0.1-SNAPSHOT.jar
             Restart=always
+            RestartSec=10
+            StandardOutput=journal
+            StandardError=journal
 
             [Install]
             WantedBy=multi-user.target
             EOF
 
-            # 4. Servisi Başlat
+            # ========================================
+            # 7. Servisi Başlat
+            # ========================================
+            echo "🔄 Servis başlatılıyor..."
             sudo systemctl daemon-reload
             sudo systemctl enable site-duyuru
             sudo systemctl restart site-duyuru
             
+            # Kısa bekleme ve durum kontrolü
+            sleep 5
+            
+            echo ""
+            echo "============================================"
             echo "✅ Backend Deployment Başarıyla Tamamlandı!"
-            sudo systemctl status site-duyuru --no-pager
+            echo "============================================"
+            echo "📌 Servis Durumu:"
+            sudo systemctl status site-duyuru --no-pager || true
+            echo ""
+            echo "📌 Port Kontrolü:"
+            sudo netstat -tlnp | grep 8080 || echo "Port henüz açılmadı, biraz bekleyin..."
+            echo ""
+            echo "📌 Logları görmek için: sudo journalctl -u site-duyuru -f"
