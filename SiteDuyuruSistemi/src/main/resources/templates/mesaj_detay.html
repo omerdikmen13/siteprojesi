@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mesaj Detayı - SiteDuyuru</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+    <div th:replace="header :: header"></div>
+
+    <div class="container py-5">
+        <div class="mb-4">
+            <a th:href="@{/mesajlar}" class="btn btn-outline btn-sm">
+                <i class="bi bi-arrow-left"></i> Mesajlara Dön
+            </a>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white py-3">
+                <h4 class="mb-0 fw-700" th:text="${rootMesaj.baslik}">Konu</h4>
+            </div>
+
+            <div class="card-body bg-light bg-opacity-50">
+                <div class="msg-thread">
+                    <div th:each="m : ${thread}" class="msg-bubble"
+                        th:classappend="${m.gonderenId == kullaniciId ? 'msg-sent' : 'msg-received'}">
+
+                        <div class="msg-info">
+                            <span class="d-flex align-items-center">
+                                <span class="msg-role-tag me-2"
+                                    th:with="user=${kullaniciServisi.idIleKullaniciBul(m.gonderenId).orElse(null)}"
+                                    th:text="${user != null ? user.rolu.displayValue : 'Bilinmeyen'}">Yönetici</span>
+                                <strong th:with="user=${kullaniciServisi.idIleKullaniciBul(m.gonderenId).orElse(null)}"
+                                    th:text="${user != null ? user.adSoyad : 'Bilinmeyen'}">İsim</strong>
+                            </span>
+                            <div class="d-flex align-items-center">
+                                <span class="me-2" th:text="${#temporals.format(m.tarih, 'dd MMM HH:mm')}">Tarih</span>
+                                <form th:if="${m.gonderenId == kullaniciId and !m.silindi}"
+                                    th:action="@{/mesajlar/sil/{id}(id=${m.id})}" method="post">
+                                    <button type="submit" class="btn btn-link text-danger p-0 ms-1"
+                                        onclick="return confirm('Bu mesajı silmek istediğinize emin misiniz?');">
+                                        <i class="bi bi-trash small"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <div class="msg-content" th:classappend="${m.silindi ? 'text-secondary fst-italic' : ''}"
+                            th:text="${m.silindi ? 'Bu mesaj silindi' : m.icerik}">Mesaj içeriği burada yer alacak.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Yanıtla Alanı (Thread içinde kalması için) -->
+            <div class="card-footer bg-white p-4 border-top">
+                <form th:action="@{/mesajlar/gonder}" method="post">
+                    <input type="hidden" name="anaMesajId" th:value="${rootMesaj.anaMesajId ?: rootMesaj.id}">
+                    <input type="hidden" name="baslik" th:value="${rootMesaj.baslik}">
+                    <!-- Alıcıyı mesaj akışına göre belirle -->
+                    <input type="hidden" name="aliciId"
+                        th:value="${!thread.empty ? (thread[0].gonderenId == kullaniciId ? thread[0].aliciId : thread[0].gonderenId) : rootMesaj.gonderenId}">
+
+                    <div class="input-group">
+                        <textarea name="icerik" class="form-control border-0 bg-light"
+                            placeholder="Mesajınızı buraya yazın..." rows="3" required
+                            style="border-radius: var(--radius-md) 0 0 var(--radius-md);"></textarea>
+                        <button type="submit" class="btn btn-primary px-4"
+                            style="border-radius: 0 var(--radius-md) var(--radius-md) 0;">
+                            <i class="bi bi-send-fill fs-5"></i>
+                        </button>
+                    </div>
+                    <div class="mt-2 text-secondary small">
+                        <i class="bi bi-info-circle me-1"></i> Bu konuşma altındaki tüm mesajlar tek bir başlıkta
+                        toplanır.
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

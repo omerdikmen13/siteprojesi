@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yönetici Paneli - SiteDuyuru</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+    <div th:replace="~{header :: header}"></div>
+
+    <main class="app-container animate-fade-in">
+        <header class="mb-5">
+            <h1 class="fw-700 mb-2">Yönetim Paneli</h1>
+            <p class="text-secondary">Sitenizin tüm süreçlerini buradan kontrol edebilir ve analiz edebilirsiniz.</p>
+        </header>
+
+        <!-- Stats Overview -->
+        <div class="grid mb-5">
+            <div class="card p-3 border-0 shadow-sm"
+                style="background: linear-gradient(135deg, #6366f1 0%, #818cf8 100%); color: white;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="mb-1 opacity-75">Toplam Harcama</p>
+                        <h3 class="fw-bold mb-0"
+                            th:text="${#numbers.formatDecimal(toplamGider, 1, 'POINT', 2, 'COMMA') + ' TL'}">0,00 TL
+                        </h3>
+                    </div>
+                    <div class="bg-white bg-opacity-20 p-2 rounded-3">
+                        <i class="bi bi-graph-down-arrow fs-4"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-3 border-0 shadow-sm"
+                style="background: linear-gradient(135deg, #10b981 0%, #34d399 100%); color: white;"
+                th:if="${aktifAidat != null}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="mb-1 opacity-75">Aktif Aidat Dönemi</p>
+                        <h3 class="fw-bold mb-0"
+                            th:text="${aktifAidat.ay != null ? aktifAidat.ay + ' ' + aktifAidat.yil : aktifAidat.donem}">
+                            Ocak 2026</h3>
+                    </div>
+                    <div class="bg-white bg-opacity-20 p-2 rounded-3">
+                        <i class="bi bi-calendar-check fs-4"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card p-3 border-0 shadow-sm"
+                style="background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 100%); color: white;">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <p class="mb-1 opacity-75">Aktif Duyurular</p>
+                        <h3 class="fw-bold mb-0" th:text="${#lists.size(duyurular)}">0</h3>
+                    </div>
+                    <div class="bg-white bg-opacity-20 p-2 rounded-3">
+                        <i class="bi bi-megaphone fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h2 class="h4 fw-600 mb-4">Hızlı Erişim</h2>
+        <div class="grid">
+            <!-- Duyurular -->
+            <div class="card bg-white border-0 shadow-sm">
+                <div class="card-body p-4 text-center">
+                    <div class="mb-3 d-inline-flex p-3 rounded-circle bg-primary bg-opacity-10 text-primary">
+                        <i class="bi bi-megaphone-fill fs-3"></i>
+                    </div>
+                    <h5 class="fw-bold">Duyurular</h5>
+                    <p class="text-secondary small mb-4">Yeni duyuru yayınlayın, anketler oluşturun ve mevcutları
+                        düzenleyin.</p>
+                    <a href="/duyurular/liste" class="btn btn-primary w-100 justify-content-center">Yönetime Git</a>
+                </div>
+            </div>
+
+            <!-- Aidatlar -->
+            <div class="card bg-white border-0 shadow-sm">
+                <div class="card-body p-4 text-center">
+                    <div class="mb-3 d-inline-flex p-3 rounded-circle bg-success bg-opacity-10 text-success">
+                        <i class="bi bi-wallet-fill fs-3"></i>
+                    </div>
+                    <h5 class="fw-bold">Aidat İşlemleri</h5>
+                    <p class="text-secondary small mb-4">Aylık aidatları tanımlayın, ödeme durumlarını takip edin ve
+                        listeleri görün.</p>
+                    <a href="/aidatlar/liste" class="btn btn-success w-100 justify-content-center border-0"
+                        style="background-color: var(--success);">Yönetime Git</a>
+                </div>
+            </div>
+
+            <!-- Harcamalar -->
+            <div class="card bg-white border-0 shadow-sm">
+                <div class="card-body p-4 text-center">
+                    <div class="mb-3 d-inline-flex p-3 rounded-circle bg-warning bg-opacity-10 text-warning">
+                        <i class="bi bi-cart-check-fill fs-3"></i>
+                    </div>
+                    <h5 class="fw-bold">Gider Takibi</h5>
+                    <p class="text-secondary small mb-4">Site için yapılan tüm harcamaları tek bir noktadan kaydedin ve
+                        izleyin.</p>
+                    <a href="/harcamalar/liste" class="btn btn-warning w-100 justify-content-center text-white border-0"
+                        style="background-color: var(--warning);">Yönetime Git</a>
+                </div>
+            </div>
+
+            <!-- Kullanıcılar -->
+            <div class="card bg-white border-0 shadow-sm">
+                <div class="card-body p-4 text-center">
+                    <div class="mb-3 d-inline-flex p-3 rounded-circle bg-info bg-opacity-10 text-info">
+                        <i class="bi bi-people-fill fs-3"></i>
+                    </div>
+                    <h5 class="fw-bold">Kullanıcı Yönetimi</h5>
+                    <p class="text-secondary small mb-4">Site sakinlerini kaydedin, yetkilerini düzenleyin ve iletişim
+                        bilgilerini tutun.</p>
+                    <a href="/kullanici/liste" class="btn btn-info w-100 justify-content-center text-white border-0"
+                        style="background-color: var(--info);">Yönetime Git</a>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="app-container mt-auto py-5 text-center">
+        <p class="text-secondary small">&copy; 2026 SiteDuyuru - Modern Site Yönetim Çözümü</p>
+    </footer>
+</body>
+
+</html>
+
+</body>
+
+</html>

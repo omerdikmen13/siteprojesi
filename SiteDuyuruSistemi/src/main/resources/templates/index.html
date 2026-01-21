@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sakin Paneli - SiteDuyuru</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+    <div th:replace="~{header :: header}"></div>
+
+    <main class="app-container animate-fade-in">
+        <header class="mb-5">
+            <h1 class="fw-700 mb-2">Hoş Geldiniz, <span th:text="${kullaniciAdi}">Komşu</span></h1>
+            <p class="text-secondary">Sitenizdeki güncel gelişmeleri buradan takip edebilirsiniz.</p>
+        </header>
+
+        <div class="row g-4">
+            <!-- Left Column: Announcements -->
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm h-100">
+                    <div
+                        class="card-header bg-transparent py-3 border-bottom d-flex align-items-center justify-content-between">
+                        <h5 class="mb-0 fw-bold"><i class="bi bi-megaphone me-2 text-primary"></i> Son Duyurular</h5>
+                        <a href="/duyurular/liste" class="btn btn-outline btn-sm">Tümünü Gör</a>
+                    </div>
+                    <div class="card-body p-0">
+                        <div th:each="d : ${duyurular}" class="p-4 border-bottom last-child-no-border">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <h6 class="fw-bold fs-5 mb-0" th:text="${d.baslik}">Duyuru Başlığı</h6>
+                                <span th:if="${d.anketMi}" class="badge-ai" style="font-size: 0.65rem;">
+                                    <i class="bi bi-patch-question me-1"></i> Oylama Aktif
+                                </span>
+                            </div>
+                            <div class="d-flex align-items-center text-secondary small mb-3">
+                                <i class="bi bi-calendar-event me-2"></i>
+                                <span th:text="${#temporals.format(d.olusturmaTarihi, 'dd MMMM yyyy HH:mm')}"></span>
+                            </div>
+                            <p class="text-secondary" th:text="${#strings.abbreviate(d.icerik, 200)}">Duyuru içeriği...
+                            </p>
+                            <a th:href="@{/duyurular/detay/{id}(id=${d.id})}"
+                                class="btn btn-outline btn-sm rounded-pill mt-2">
+                                <i class="bi bi-arrow-right-short"></i> Detayları İncele
+                            </a>
+                        </div>
+                        <div th:if="${#lists.isEmpty(duyurular)}" class="text-center py-5">
+                            <i class="bi bi-inbox fs-1 text-secondary opacity-25 d-block mb-3"></i>
+                            <p class="text-secondary">Henüz bir duyuru bulunmuyor.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Aidat & Expenses -->
+            <div class="col-lg-4">
+                <!-- Aidat Status Card -->
+                <div class="card border-0 shadow-lg text-white mb-4"
+                    style="background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <div class="bg-white bg-opacity-20 p-2 rounded-circle me-3">
+                                <i class="bi bi-wallet2 fs-4"></i>
+                            </div>
+                            <h6 class="mb-0 fw-bold"><span
+                                    th:text="${aktifAidat != null ? aktifAidat.donem : 'Aktif Dönem'}"></span> Aidat
+                            </h6>
+                        </div>
+                        <h2 class="display-5 fw-bold mb-3"
+                            th:text="${aktifAidat != null ? '₺' + #numbers.formatDecimal(aktifAidat.tutar, 1, 'POINT', 2, 'COMMA') : '₺0,00'}">
+                        </h2>
+
+                        <button class="btn btn-light btn-sm w-100 rounded-pill fw-bold text-primary py-2" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#harcamaDetay">
+                            <i class="bi bi-info-circle me-1"></i> Hesaplama Detayları
+                        </button>
+
+                        <div class="collapse mt-3" id="harcamaDetay">
+                            <div class="p-3 rounded bg-white bg-opacity-10">
+                                <h6 class="fw-bold small mb-2 text-white text-opacity-75">Bu Ayki Giderler:</h6>
+                                <div th:each="h : ${harcamalar}" class="d-flex justify-content-between mb-1 small">
+                                    <span th:text="${h.baslik}">Gider</span>
+                                    <span class="fw-bold" th:text="${'₺' + h.tutar}">0</span>
+                                </div>
+                                <hr class="my-2 bg-white">
+                                <div class="d-flex justify-content-between fw-bold">
+                                    <span>Toplam:</span>
+                                    <span th:text="${'₺' + toplamGider}">0</span>
+                                </div>
+                                <p class="mt-3 mb-0 text-white text-opacity-50" style="font-size: 0.65rem;">
+                                    * Toplam harcamanın daire başına düşen payı.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Latest Expenses -->
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-transparent border-bottom py-3">
+                        <h6 class="mb-0 fw-bold"><i class="bi bi-receipt me-2 text-primary"></i> Son Giderler</h6>
+                    </div>
+                    <div class="list-group list-group-flush">
+                        <div th:each="h : ${harcamalar}"
+                            class="list-group-item d-flex justify-content-between align-items-center py-3 border-0 border-bottom mx-2">
+                            <div>
+                                <span class="d-block text-dark fw-bold small" th:text="${h.baslik}">Harcama</span>
+                                <small class="text-secondary" style="font-size: 0.75rem;"
+                                    th:text="${#temporals.format(h.tarih, 'dd.MM.yyyy')}"></small>
+                            </div>
+                            <span class="badge bg-light text-primary border-0 rounded-pill small px-3 py-2"
+                                th:text="${'₺' + h.tutar}">0</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="app-container mt-auto py-5 text-center">
+        <p class="text-secondary small">&copy; 2026 SiteDuyuru - Komşularınızla Hep Bağda Kalın.</p>
+    </footer>
+
+    <style>
+        .last-child-no-border:last-child {
+            border-bottom: none !important;
+        }
+    </style>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

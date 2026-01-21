@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aidat Detayı - SiteDuyuru</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+    <div th:replace="~{header :: header}"></div>
+
+    <main class="app-container animate-fade-in">
+        <div class="row g-4 mb-4">
+            <!-- Yöneticiler için özet kartları -->
+            <th:block th:if="${isAdmin}">
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm bg-primary bg-opacity-10">
+                        <div class="card-body p-4 text-center">
+                            <i class="bi bi-cash-stack text-primary fs-2 mb-2 d-block"></i>
+                            <div class="text-secondary small">Toplam Tahsilat</div>
+                            <div class="fw-bold fs-4 text-primary"
+                                th:text="${'₺' + #numbers.formatDecimal(stats.toplamToplanan, 1, 'POINT', 2, 'COMMA')}">
+                                ₺0</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4 text-center">
+                            <i class="bi bi-people text-success fs-2 mb-2 d-block"></i>
+                            <div class="text-secondary small">Ödeyen Daire</div>
+                            <div class="fw-bold fs-4" th:text="${stats.odeyenSayisi + ' / ' + stats.toplamDaire}">0 / 0
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4 text-center">
+                            <i class="bi bi-person-x text-danger fs-2 mb-2 d-block"></i>
+                            <div class="text-secondary small">Borçlu Daire</div>
+                            <div class="fw-bold fs-4 text-danger" th:text="${stats.odemeyenSayisi}">0</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm"
+                        th:classappend="${aidat.durum.name() == 'ODENDI' ? 'bg-success bg-opacity-10' : ''}">
+                        <div class="card-body p-4 text-center">
+                            <i class="bi bi-flag fs-2 mb-2 d-block"
+                                th:classappend="${aidat.durum.name() == 'ODENDI' ? 'text-success' : 'text-secondary'}"></i>
+                            <div class="text-secondary small">Aidat Durumu</div>
+                            <div class="fw-bold fs-5"
+                                th:text="${aidat.durum.name() == 'ODENDI' ? 'TAMAMLANDI' : 'DEVAM EDİYOR'}">...</div>
+                        </div>
+                    </div>
+                </div>
+            </th:block>
+            <!-- Sakinler için özet kartı -->
+            <th:block th:if="${!isAdmin}">
+                <div class="col-12">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body p-4 d-flex align-items-center gap-4">
+                            <div class="bg-primary bg-opacity-10 rounded-circle p-3">
+                                <i class="bi bi-info-circle text-primary fs-3"></i>
+                            </div>
+                            <div>
+                                <h5 class="mb-1 fw-bold">Genel Tahsilat Durumu</h5>
+                                <p class="mb-0 text-secondary"
+                                    th:text="${'Şu ana kadar ' + stats.odeyenSayisi + ' / ' + stats.toplamDaire + ' daire ödeme yaptı.'}">
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </th:block>
+        </div>
+
+        <div class="row g-4">
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-transparent py-3 border-bottom">
+                        <h5 class="mb-0 fw-bold"><i class="bi bi-info-circle me-2 text-primary"></i> Ödeme Bilgileri
+                        </h5>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="mb-4">
+                            <label class="text-secondary small d-block mb-1">Dönem</label>
+                            <div class="fw-bold fs-5 text-dark" th:text="${aidat.donem}">Haziran 2025</div>
+                        </div>
+                        <div class="mb-4">
+                            <label class="text-secondary small d-block mb-1">Daire Başı Tutar</label>
+                            <div class="fw-bold fs-3 text-primary"
+                                th:text="${'₺' + #numbers.formatDecimal(aidat.tutar, 1, 'POINT', 2, 'COMMA')}">₺0,00
+                            </div>
+                        </div>
+                        <div class="mt-5 d-flex gap-2">
+                            <a th:href="@{/aidatlar/liste}" class="btn btn-outline">
+                                <i class="bi bi-arrow-left"></i> Listeye Dön
+                            </a>
+                            <!-- Ödeme Butonu (Sadece Sakinler ve Ödenmediyse) -->
+                            <a th:if="${!isAdmin and aidat.durum.name() == 'ODENMEDI'}"
+                                th:href="@{/odeme/{id}(id=${aidat.id})}" class="btn btn-success">
+                                <i class="bi bi-credit-card me-1"></i>Ödeme Yap
+                            </a>
+                            <a th:if="${isAdmin}" th:href="@{/aidatlar/duzenle/{id}(id=${aidat.id})}"
+                                class="btn btn-primary">
+                                <i class="bi bi-pencil me-1"></i> Düzenle
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-transparent py-3 border-bottom">
+                        <h5 class="mb-0 fw-bold"><i class="bi bi-list-check me-2 text-primary"></i> Harcama Dökümü</h5>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table mb-0">
+                                <thead>
+                                    <tr>
+                                        <th class="ps-4">Açıklama</th>
+                                        <th class="text-end pe-4">Tutar</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr th:each="h : ${harcamalar}">
+                                        <td class="ps-4 text-dark" th:text="${h.baslik}">Gider</td>
+                                        <td class="text-end pe-4 fw-bold" th:text="${'₺' + h.tutar}">₺0</td>
+                                    </tr>
+                                    <tr th:if="${#lists.isEmpty(harcamalar)}">
+                                        <td colspan="2" class="text-center py-4 text-secondary">Harcama bulunamadı.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- YÖNETİCİ İÇİN LİSTELER -->
+        <th:block th:if="${isAdmin}">
+            <div class="row mt-4">
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm mb-5">
+                        <div
+                            class="card-header bg-transparent py-3 border-bottom d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-bold text-success"><i class="bi bi-check-circle me-2"></i> Ödeyenler</h5>
+                            <span class="badge bg-success rounded-pill" th:text="${#lists.size(odeyenler)}">0</span>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light small">
+                                        <tr>
+                                            <th class="ps-4">Daire</th>
+                                            <th>Email</th>
+                                            <th class="text-end pe-4">Tarih</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="small">
+                                        <tr th:each="o : ${odeyenler}">
+                                            <td class="ps-4 fw-bold" th:text="${o.kullaniciDaireNo}">-</td>
+                                            <td th:text="${o.kullaniciEmail}">-</td>
+                                            <td class="text-end pe-4 text-secondary"
+                                                th:text="${#temporals.format(o.odemeTarihi, 'dd.MM.HH:mm')}"></td>
+                                        </tr>
+                                        <tr th:if="${#lists.isEmpty(odeyenler)}">
+                                            <td colspan="3" class="text-center py-4 text-secondary">Kayıt yok.</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-6">
+                    <div class="card border-0 shadow-sm mb-5">
+                        <div
+                            class="card-header bg-transparent py-3 border-bottom d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-bold text-danger"><i class="bi bi-clock-history me-2"></i> Borçlular</h5>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="badge bg-danger rounded-pill" th:text="${#lists.size(borclular)}">0</span>
+                                <a th:if="${not #lists.isEmpty(borclular)}"
+                                    th:href="@{/mesajlar/yeni(aidatId=${aidat.id})}"
+                                    class="btn btn-sm btn-danger text-white">
+                                    <i class="bi bi-robot me-1"></i> İhbarname Hazırla
+                                </a>
+                            </div>
+                        </div>
+                        <div class="card-body p-0">
+                            <div class="table-responsive">
+                                <table class="table table-hover mb-0">
+                                    <thead class="table-light small">
+                                        <tr>
+                                            <th class="ps-4">Daire</th>
+                                            <th>Ad Soyad</th>
+                                            <th class="text-end pe-4">Email</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="small">
+                                        <tr th:each="b : ${borclular}">
+                                            <td class="ps-4 fw-bold text-danger"
+                                                th:text="${b.daireNo != null ? b.daireNo : '-'}"></td>
+                                            <td th:text="${b.adSoyad}"></td>
+                                            <td class="text-end pe-4" th:text="${b.email}"></td>
+                                        </tr>
+                                        <tr th:if="${#lists.isEmpty(borclular)}">
+                                            <td colspan="3" class="text-center py-4 text-secondary">Herkes ödeme yapmış!
+                                                ✨</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </th:block>
+    </main>
+
+    <footer class="app-container mt-auto py-5 text-center">
+        <p class="text-secondary small">&copy; 2026 SiteDuyuru - Şeffaf Yönetim.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

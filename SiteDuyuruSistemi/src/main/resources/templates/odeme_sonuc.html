@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ödeme Sonucu - SiteDuyuru</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .success-icon {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #198754 0%, #157347 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+            animation: pulse 2s infinite;
+        }
+
+        .success-icon i {
+            font-size: 60px;
+            color: white;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .result-card {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: #6c757d;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: #333;
+        }
+    </style>
+</head>
+
+<body>
+    <div th:replace="~{header :: header}"></div>
+
+    <main class="app-container animate-fade-in py-5">
+        <div class="result-card">
+            <!-- Başarı İkonu -->
+            <div class="text-center mb-4">
+                <div class="success-icon mb-4">
+                    <i class="bi bi-check-lg"></i>
+                </div>
+                <h2 class="fw-bold text-success">Ödeme Başarılı!</h2>
+                <p class="text-secondary">Aidat ödemeniz başarıyla alınmıştır.</p>
+            </div>
+
+            <!-- Ödeme Detayları -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-header bg-transparent py-3 border-bottom">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="bi bi-receipt me-2 text-primary"></i>
+                        Ödeme Detayları
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="info-row">
+                        <span class="info-label">Referans No</span>
+                        <span class="info-value font-monospace" th:text="${odeme.odemeReferansNo}">SD-12345678</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Dönem</span>
+                        <span class="info-value" th:text="${aidat?.donem}">Ocak 2025</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Tutar</span>
+                        <span class="info-value text-primary fs-5"
+                            th:text="'₺' + ${#numbers.formatDecimal(odeme.tutar, 1, 'POINT', 2, 'COMMA')}">₺0,00</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Kart</span>
+                        <span class="info-value" th:text="${odeme.kartNumarasi}">**** 1111</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">İşlem Tarihi</span>
+                        <span class="info-value"
+                            th:text="${#temporals.format(odeme.islemBitis, 'dd.MM.yyyy HH:mm')}">01.01.2025 12:00</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Durum</span>
+                        <span class="badge bg-success">
+                            <i class="bi bi-check-circle me-1"></i>
+                            Başarılı
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bilgi Notu -->
+            <div class="alert alert-info d-flex align-items-start" role="alert">
+                <i class="bi bi-info-circle-fill me-2 mt-1"></i>
+                <div>
+                    <strong>Bilgilendirme:</strong> Bu bir demo ödeme işlemidir.
+                    Gerçek bir ödeme yapılmamıştır. Aidat durumunuz "Ödendi" olarak güncellenmiştir.
+                </div>
+            </div>
+
+            <!-- Aksiyon Butonları -->
+            <div class="d-grid gap-2">
+                <a th:href="@{/aidatlar/liste}" class="btn btn-primary btn-lg">
+                    <i class="bi bi-list-ul me-2"></i>
+                    Aidat Listesine Dön
+                </a>
+                <a th:href="@{/}" class="btn btn-outline-secondary">
+                    <i class="bi bi-house me-2"></i>
+                    Ana Sayfaya Git
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <footer class="app-container mt-auto py-5 text-center">
+        <p class="text-secondary small">&copy; 2026 SiteDuyuru - Şeffaf Yönetim.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

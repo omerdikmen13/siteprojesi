@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aidat Ödemesi - SiteDuyuru</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <!-- Stripe.js -->
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        .payment-card {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .amount-display {
+            background: linear-gradient(135deg, #0066CC 0%, #003366 100%);
+            color: white;
+            border-radius: 12px;
+            padding: 24px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 51, 102, 0.2);
+        }
+
+        /* Stripe Element Styles */
+        #card-element {
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            background: white;
+            margin-bottom: 20px;
+        }
+
+        #card-errors {
+            color: #dc3545;
+            font-size: 0.875rem;
+            margin-bottom: 15px;
+        }
+
+        .stripe-logo {
+            width: 100px;
+            opacity: 0.6;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body class="bg-light">
+    <div th:replace="~{header :: header}"></div>
+
+    <main class="app-container animate-fade-in py-5">
+        <div class="payment-card">
+            <!-- Başlık -->
+            <div class="text-center mb-4">
+                <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center"
+                    style="width: 80px; height: 80px;">
+                    <i class="bi bi-shield-lock text-primary" style="font-size: 2rem;"></i>
+                </div>
+                <h2 class="fw-bold mt-3">Güvenli Ödeme</h2>
+                <p class="text-secondary">Stripe ile korunmaktadır</p>
+            </div>
+
+            <!-- Tutar Kartı -->
+            <div class="amount-display mb-4">
+                <p class="mb-1 opacity-75">Ödenecek Toplam</p>
+                <h1 class="display-5 fw-bold mb-1"
+                    th:text="'₺' + ${#numbers.formatDecimal(aidat.tutar, 1, 'POINT', 2, 'COMMA')}">₺0,00</h1>
+                <p class="mb-0" th:text="${aidat.donem} + ' Aidatı'"></p>
+            </div>
+
+            <!-- Stripe Formu -->
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body p-4">
+                    <form id="payment-form">
+                        <div class="mb-3">
+                            <label class="form-label fw-semibold">Kart Bilgileri</label>
+                            <div id="card-element">
+                                <!-- Stripe Elements will inject here -->
+                            </div>
+                            <div id="card-errors" role="alert"></div>
+                        </div>
+
+                        <button id="submit-button" class="btn btn-primary btn-lg w-100 rounded-3 py-3 fw-bold">
+                            <span id="button-text">Şimdi Öde</span>
+                            <div class="spinner-border spinner-border-sm d-none" id="spinner" role="status"></div>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Güvenlik Notu -->
+            <div class="text-center mt-4">
+                <p class="text-muted small">
+                    <i class="bi bi-lock-fill text-success me-1"></i>
+                    Ödemeniz 256-bit SSL ile şifrelenmektedir.
+                </p>
+                <img src="https://images.ctfassets.net/f7t692ypz6dg/7vOswC9tX88S77tpx4S0qE/03c375531d04130089e0000a94435889/Stripe_Logo_-_Black.png"
+                    alt="Powered by Stripe" class="stripe-logo">
+            </div>
+
+            <div class="text-center mt-3">
+                <a th:href="@{/aidatlar/liste}" class="btn btn-link text-secondary text-decoration-none">
+                    <i class="bi bi-arrow-left me-1"></i> İptal ve Geri Dön
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <script th:inline="javascript">
+        // STRIPE_PUBLISHABLE_KEY - placeholder
+        const stripe = Stripe('pk_test_51SoKJB1g8yPRgDzCxLQt9YZvMTXHoPdklJh8lKJsWc7zljwthQm9tFt5EW3B4MHF6lQoPQPnxSCd8chrfBl7p6QV00miS6F2XF');
+        const elements = stripe.elements();
+
+        const style = {
+            base: {
+                color: '#32325d',
+                fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+                fontSmoothing: 'antialiased',
+                fontSize: '16px',
+                '::placeholder': {
+                    color: '#aab7c4'
+                }
+            },
+            invalid: {
+                color: '#fa755a',
+                iconColor: '#fa755a'
+            }
+        };
+
+        const card = elements.create('card', { style: style });
+        card.mount('#card-element');
+
+        const form = document.getElementById('payment-form');
+        const submitButton = document.getElementById('submit-button');
+        const spinner = document.getElementById('spinner');
+        const buttonText = document.getElementById('button-text');
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            setLoading(true);
+
+            // 1. PaymentIntent oluştur
+            try {
+                const response = await fetch('/api/odeme/intent', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        aidatId: /*[[${aidat.id}]]*/ null,
+                        tutar: /*[[${aidat.tutar}]]*/ 0
+                    })
+                });
+
+                const { clientSecret, error: intentError } = await response.json();
+
+                if (intentError) {
+                    showError(intentError);
+                    setLoading(false);
+                    return;
+                }
+
+                // 2. Ödemeyi onayla
+                const result = await stripe.confirmCardPayment(clientSecret, {
+                    payment_method: {
+                        card: card,
+                        billing_details: {
+                            email: /*[[${kullaniciEmail}]]*/ ''
+                        }
+                    }
+                });
+
+                if (result.error) {
+                    showError(result.error.message);
+                    setLoading(false);
+                } else {
+                    if (result.paymentIntent.status === 'succeeded') {
+                        // 3. Backend'e bildir
+                        await fetch('/api/odeme/onayla', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                paymentId: result.paymentIntent.id,
+                                aidatId: /*[[${aidat.id}]]*/ null,
+                                tutar: /*[[${aidat.tutar}]]*/ 0,
+                                kullaniciId: null // Backend auth'tan alacak veya email ile eşleyecek
+                            })
+                        });
+
+                        window.location.href = '/aidatlar/liste?success=true';
+                    }
+                }
+            } catch (err) {
+                showError("Bir sistem hatası oluştu. Lütfen tekrar deneyin.");
+                setLoading(false);
+            }
+        });
+
+        function showError(message) {
+            const errorElement = document.getElementById('card-errors');
+            errorElement.textContent = message;
+        }
+
+        function setLoading(isLoading) {
+            if (isLoading) {
+                submitButton.disabled = true;
+                spinner.classList.remove('d-none');
+                buttonText.classList.add('d-none');
+            } else {
+                submitButton.disabled = false;
+                spinner.classList.add('d-none');
+                buttonText.classList.remove('d-none');
+            }
+        }
+    </script>
+</body>
+
+</html>

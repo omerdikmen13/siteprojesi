@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yeni Mesaj - SiteDuyuru</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+    <div th:replace="header :: header"></div>
+
+    <div class="container py-5">
+        <div class="mb-4">
+            <a th:href="@{/mesajlar}" class="btn btn-outline btn-sm">
+                <i class="bi bi-arrow-left"></i> Mesajlara Dön
+            </a>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-header bg-white py-3 border-bottom text-center">
+                        <h4 class="mb-0 fw-700">Yeni Mesaj Oluştur</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <form th:action="@{/mesajlar/gonder}" method="post">
+                            <input type="hidden" name="aidatId" th:value="${aidatId}">
+                            <th:block th:if="${isAdmin}">
+                                <div class="mb-4">
+                                    <label class="form-label fw-600">Alıcı Tipi</label>
+                                    <div class="d-flex gap-3 mt-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="toplu" id="singleUser"
+                                                value="false" th:checked="${isIhbarname == null}"
+                                                onchange="toggleReceiver(false)">
+                                            <label class="form-check-label" for="singleUser">Bireysel Sakin</label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="toplu" id="allUsers"
+                                                value="true" onchange="toggleReceiver(true)">
+                                            <label class="form-check-label" for="allUsers">Tüm Sakinler</label>
+                                        </div>
+                                        <div class="form-check" th:if="${isIhbarname}">
+                                            <input class="form-check-input" type="radio" name="toplu" id="debtors"
+                                                value="borclular" checked onchange="toggleReceiver(true)">
+                                            <label class="form-check-label" for="debtors">Tüm Borçlular
+                                                (İhbarname)</label>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-4" id="receiverSelect" th:style="${isIhbarname ? 'display:none' : ''}">
+                                    <label class="form-label fw-600">Sakin Seçiniz</label>
+                                    <select name="aliciId" class="form-select">
+                                        <option th:each="u : ${kullanicilar}" th:if="${u.rolu.name() != 'ADMIN'}"
+                                            th:value="${u.id}" th:text="${u.adSoyad + ' (Daire: ' + u.daireNo + ')'}">
+                                            İsim</option>
+                                    </select>
+                                </div>
+                            </th:block>
+
+                            <th:block th:if="${!isAdmin}">
+                                <div class="mb-4">
+                                    <label class="form-label fw-600">Alıcı</label>
+                                    <div class="p-3 bg-light rounded-4 text-primary fw-600">
+                                        <i class="bi bi-shield-check me-2"></i> Site Yönetimi
+                                    </div>
+                                    <input type="hidden" name="toplu" value="false">
+                                </div>
+                            </th:block>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-600">Mesaj Konusu</label>
+                                <input type="text" name="baslik" class="form-control" th:value="${prefillBaslik}"
+                                    placeholder="Örn: Aidat Sorunu, Arıza Bildirimi" required>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-600">Mesajınız</label>
+                                <textarea name="icerik" class="form-control" rows="8" th:text="${prefillIcerik}"
+                                    placeholder="Mesajınızı buraya detaylıca yazınız..." required></textarea>
+                            </div>
+
+                            <div class="d-grid mt-5">
+                                <button type="submit" class="btn btn-primary py-3 fw-bold">
+                                    <i class="bi bi-send me-1"></i> Mesajı Gönder
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script th:if="${isAdmin}">
+        function toggleReceiver(isToplu) {
+            const select = document.getElementById('receiverSelect');
+            select.style.display = isToplu ? 'none' : 'block';
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duyurular - SiteDuyuru</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+
+<body>
+    <div th:replace="~{header :: header}"></div>
+
+    <main class="app-container animate-fade-in">
+        <header class="mb-5 d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="fw-700 mb-2">Duyurular</h1>
+                <p class="text-secondary">Siteniz için yayınlanmış tüm güncel duyurular.</p>
+            </div>
+            <a th:if="${#authorization.expression('hasRole(''ADMIN'')')}" th:href="@{/duyurular/yeni}"
+                class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Yeni Duyuru
+            </a>
+        </header>
+
+        <div class="card border-0 shadow-sm overflow-hidden">
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">Başlık</th>
+                            <th>Tür</th>
+                            <th>Tarih</th>
+                            <th class="text-end pe-4">İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="duyuru : ${duyurular}" class="align-middle">
+                            <td class="ps-4">
+                                <div class="fw-bold text-dark" th:text="${duyuru.baslik}">Başlık</div>
+                            </td>
+                            <td>
+                                <span th:if="${duyuru.anketMi}"
+                                    class="badge bg-primary bg-opacity-10 text-primary border-0 rounded-pill px-3">
+                                    <i class="bi bi-patch-question me-1"></i> Oylama
+                                </span>
+                                <span th:unless="${duyuru.anketMi}"
+                                    class="badge bg-secondary bg-opacity-10 text-secondary border-0 rounded-pill px-3">
+                                    <i class="bi bi-info-circle me-1"></i> Bilgilendirme
+                                </span>
+                            </td>
+                            <td class="text-secondary small"
+                                th:text="${#temporals.format(duyuru.olusturmaTarihi,'dd.MM.yyyy HH:mm')}">Tarih</td>
+                            <td class="text-end pe-4">
+                                <div class="btn-group">
+                                    <a th:href="@{/duyurular/detay/{id}(id=${duyuru.id})}"
+                                        class="btn btn-outline btn-sm">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    <th:block th:if="${#authorization.expression('hasRole(''ADMIN'')')}">
+                                        <a th:href="@{/duyurular/duzenle/{id}(id=${duyuru.id})}"
+                                            class="btn btn-outline btn-sm">
+                                            <i class="bi bi-pencil"></i>
+                                        </a>
+                                        <a th:href="@{/duyurular/sil/{id}(id=${duyuru.id})}"
+                                            class="btn btn-outline btn-sm text-danger"
+                                            onclick="return confirm('Bu duyuruyu silmek istediğinizden emin misiniz?')">
+                                            <i class="bi bi-trash"></i>
+                                        </a>
+                                    </th:block>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div th:if="${#lists.isEmpty(duyurular)}" class="text-center py-5">
+                <i class="bi bi-megaphone fs-1 text-secondary opacity-25 d-block mb-3"></i>
+                <p class="text-secondary">Henüz bir duyuru bulunmuyor.</p>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <a th:href="@{/}" class="btn btn-outline">
+                <i class="bi bi-arrow-left"></i> Ana Sayfa
+            </a>
+        </div>
+    </main>
+
+    <footer class="app-container mt-auto py-5 text-center">
+        <p class="text-secondary small">&copy; 2026 SiteDuyuru - Haberiniz Olsun.</p>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+
+</html>

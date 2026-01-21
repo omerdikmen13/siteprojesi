@@ -1,0 +1,75 @@
+# ================================
+# Maven / Java
+# ================================
+HELP.md
+target/
+!.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/target/
+!**/src/test/**/target/
+*.class
+*.jar
+*.war
+*.ear
+
+# ================================
+# STS / Eclipse
+# ================================
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+
+# ================================
+# IntelliJ IDEA
+# ================================
+.idea
+*.iws
+*.iml
+*.ipr
+
+# ================================
+# NetBeans
+# ================================
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# ================================
+# VS Code
+# ================================
+.vscode/
+
+# ================================
+# Logs
+# ================================
+*.log
+logs/
+
+# ================================
+# H2 Database (Development)
+# ================================
+*.mv.db
+*.trace.db
+
+# ================================
+# Environment Files (NEVER COMMIT!)
+# ================================
+.env
+.env.local
+.env.production
+application-local.properties
+application-secret.properties
+
+# ================================
+# OS Generated
+# ================================
+.DS_Store
+Thumbs.db
