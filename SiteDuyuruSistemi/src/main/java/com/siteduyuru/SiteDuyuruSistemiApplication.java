@@ -6,6 +6,7 @@ import org.springframework.context.annotation.ComponentScan;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.scheduling.annotation.EnableAsync;
 import com.siteduyuru.model.*;
 import com.siteduyuru.veritabani.*;
 import java.time.LocalDate;
@@ -13,6 +14,7 @@ import java.time.LocalDateTime;
 
 @SpringBootApplication
 @ComponentScan(basePackages = "com.siteduyuru")
+@EnableAsync // Mail gönderimi asenkron çalışsın diye
 public class SiteDuyuruSistemiApplication {
 
     public static void main(String[] args) {
